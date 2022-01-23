@@ -5,7 +5,7 @@
 // (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 //
-// 
+//
 #ifdef __cpp_modules
 #ifdef _MSC_VER
 #define BOOST_UT_DISABLE_MODULE
@@ -17,10 +17,19 @@ import boost.ut; // Doesn't appear to work yet with MSVC/CMake
 #include <boost/ut.hpp>
 #endif
 
+boost::ut::suite errors = [] {
+  using namespace boost::ut;
+
+  "exception"_test = [] {
+    expect(throws([] { throw 0; })) << "throws any exception";
+  };
+
+  "equals"_test = [] {
+    expect(1_i == 2) << "guaranteed to fail";
+  };
+};
 
 int main()
 {
-  using namespace boost::ut;
-  expect(1_i == 2);
-  return 0;
+  return EXIT_SUCCESS;
 }

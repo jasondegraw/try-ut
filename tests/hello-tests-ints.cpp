@@ -5,7 +5,7 @@
 // (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 //
-// 
+//
 #ifdef __cpp_modules
 #ifdef _MSC_VER
 #define BOOST_UT_DISABLE_MODULE
@@ -17,10 +17,19 @@ import boost.ut; // Doesn't appear to work yet with MSVC/CMake
 #include <boost/ut.hpp>
 #endif
 
+#include "hello.hpp"
+#include <sstream>
 
-int main()
-{
+boost::ut::suite ints = [] {
   using namespace boost::ut;
-  expect(1_i == 2);
-  return 0;
-}
+
+  "answer"_test = [] {
+    std::stringstream strstream;
+    Hello hello(strstream);
+    expect(42_i == hello.the_answer()) << "the universe and all that";
+  };
+
+  "nothing"_test = [] {
+    expect(1_i == 1) << "probably should never fail";
+  };
+};

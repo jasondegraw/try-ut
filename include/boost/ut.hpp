@@ -939,7 +939,7 @@ inline constexpr auto is_op_v = __is_base_of(detail::op, T);
 struct colors {
   std::string_view none = "\033[0m";
   std::string_view pass = "\033[32m";
-  std::string_view fail = "\033[31m";
+  std::string_view fail = "\033[91m";
 };
 
 class printer {
@@ -949,7 +949,7 @@ class printer {
 
  public:
 #ifdef _MSC_VER
-  printer() {
+  void setup_console() {
     auto console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
     if (console_handle != INVALID_HANDLE_VALUE) {
       DWORD console_mode;
@@ -957,48 +957,17 @@ class printer {
       console_mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
       auto success = SetConsoleMode(console_handle, console_mode);
       if (success == 0) {
-        // Do something here?
-        LPVOID lpMsgBuf;
-        LPVOID lpDisplayBuf;
-        DWORD dw = GetLastError();
-
-        FormatMessage(
-          FORMAT_MESSAGE_ALLOCATE_BUFFER |
-          FORMAT_MESSAGE_FROM_SYSTEM |
-          FORMAT_MESSAGE_IGNORE_INSERTS,
-          NULL,
-          dw,
-          MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-          (LPTSTR)&lpMsgBuf,
-          0, NULL);
-
-        // Display the error message and exit the process
-
-        lpDisplayBuf = (LPVOID)LocalAlloc(LMEM_ZEROINIT,
-          (lstrlen((LPCTSTR)lpMsgBuf) + lstrlen(TEXT("GetProcessId")) + 40) * sizeof(TCHAR));
-        StringCchPrintf((LPTSTR)lpDisplayBuf,
-          LocalSize(lpDisplayBuf) / sizeof(TCHAR),
-          TEXT("%s failed with error %d: %s"),
-          TEXT("GetProcessId"), dw, lpMsgBuf);
-        MessageBox(NULL, (LPCTSTR)lpDisplayBuf, TEXT("Error"), MB_OK);
-
-        LocalFree(lpMsgBuf);
-        LocalFree(lpDisplayBuf);
-        ExitProcess(dw);
+        //colors_.none = {};
+        //colors_.pass = {};
+        //colors_.fail = {};
       }
     }
   }
-  /*explicit(false)*/ printer(const colors colors) : colors_{ colors } {
-    auto console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (console_handle != INVALID_HANDLE_VALUE) {
-      DWORD console_mode;
-      GetConsoleMode(console_handle, &console_mode);
-      console_mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-      auto success = SetConsoleMode(console_handle, console_mode);
-      if (success == 0) {
-        // Do something here?
-      }
-    }
+  printer() {
+    setup_console();
+  }
+  /*explicit(false)*/ printer(const colors colors) : colors_{colors} {
+    setup_console();
   }
 #else
   printer() = default;
