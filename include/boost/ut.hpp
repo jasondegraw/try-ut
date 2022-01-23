@@ -16,6 +16,12 @@ export import std;
 #include <iso646.h>  // and, or, not, ...
 #endif
 
+#if defined(_MSC_VER)
+#include <windows.h>
+#include <strsafe.h>
+#include <iostream>
+#endif
+
 #if not defined(__cpp_rvalue_references)
 #error "[Boost::ext].UT requires support for rvalue references";
 #elif not defined(__cpp_decltype)
@@ -942,8 +948,62 @@ class printer {
   }
 
  public:
+#ifdef _MSC_VER
+  printer() {
+    auto console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (console_handle != INVALID_HANDLE_VALUE) {
+      DWORD console_mode;
+      GetConsoleMode(console_handle, &console_mode);
+      console_mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+      auto success = SetConsoleMode(console_handle, console_mode);
+      if (success == 0) {
+        // Do something here?
+        LPVOID lpMsgBuf;
+        LPVOID lpDisplayBuf;
+        DWORD dw = GetLastError();
+
+        FormatMessage(
+          FORMAT_MESSAGE_ALLOCATE_BUFFER |
+          FORMAT_MESSAGE_FROM_SYSTEM |
+          FORMAT_MESSAGE_IGNORE_INSERTS,
+          NULL,
+          dw,
+          MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+          (LPTSTR)&lpMsgBuf,
+          0, NULL);
+
+        // Display the error message and exit the process
+
+        lpDisplayBuf = (LPVOID)LocalAlloc(LMEM_ZEROINIT,
+          (lstrlen((LPCTSTR)lpMsgBuf) + lstrlen(TEXT("GetProcessId")) + 40) * sizeof(TCHAR));
+        StringCchPrintf((LPTSTR)lpDisplayBuf,
+          LocalSize(lpDisplayBuf) / sizeof(TCHAR),
+          TEXT("%s failed with error %d: %s"),
+          TEXT("GetProcessId"), dw, lpMsgBuf);
+        MessageBox(NULL, (LPCTSTR)lpDisplayBuf, TEXT("Error"), MB_OK);
+
+        LocalFree(lpMsgBuf);
+        LocalFree(lpDisplayBuf);
+        ExitProcess(dw);
+      }
+    }
+  }
+  /*explicit(false)*/ printer(const colors colors) : colors_{ colors } {
+    auto console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (console_handle != INVALID_HANDLE_VALUE) {
+      DWORD console_mode;
+      GetConsoleMode(console_handle, &console_mode);
+      console_mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+      auto success = SetConsoleMode(console_handle, console_mode);
+      if (success == 0) {
+        // Do something here?
+      }
+    }
+  }
+#else
   printer() = default;
   /*explicit(false)*/ printer(const colors colors) : colors_{colors} {}
+#endif
 
   template <class T>
   auto& operator<<(const T& t) {
