@@ -16,12 +16,6 @@ export import std;
 #include <iso646.h>  // and, or, not, ...
 #endif
 
-#if defined(_MSC_VER)
-#include <windows.h>
-#include <strsafe.h>
-#include <iostream>
-#endif
-
 #if not defined(__cpp_rvalue_references)
 #error "[Boost::ext].UT requires support for rvalue references";
 #elif not defined(__cpp_decltype)
@@ -939,7 +933,7 @@ inline constexpr auto is_op_v = __is_base_of(detail::op, T);
 struct colors {
   std::string_view none = "\033[0m";
   std::string_view pass = "\033[32m";
-  std::string_view fail = "\033[91m";
+  std::string_view fail = "\033[31m";
 };
 
 class printer {
@@ -948,31 +942,8 @@ class printer {
   }
 
  public:
-#ifdef _MSC_VER
-  void setup_console() {
-    auto console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (console_handle != INVALID_HANDLE_VALUE) {
-      DWORD console_mode;
-      GetConsoleMode(console_handle, &console_mode);
-      console_mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-      auto success = SetConsoleMode(console_handle, console_mode);
-      if (success == 0) {
-        //colors_.none = {};
-        //colors_.pass = {};
-        //colors_.fail = {};
-      }
-    }
-  }
-  printer() {
-    setup_console();
-  }
-  /*explicit(false)*/ printer(const colors colors) : colors_{colors} {
-    setup_console();
-  }
-#else
   printer() = default;
   /*explicit(false)*/ printer(const colors colors) : colors_{colors} {}
-#endif
 
   template <class T>
   auto& operator<<(const T& t) {
